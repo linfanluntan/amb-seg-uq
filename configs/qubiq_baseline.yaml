@@ -1,0 +1,28 @@
+# QUBIQ Baseline Configuration
+
+_base_: "base.yaml"
+
+data:
+  dataset: "qubiq"
+  root: "./data/qubiq"
+  task: "prostate"  # prostate | brain_growth | kidney | brain_tumor
+
+preprocessing:
+  spatial_size: [256, 256]
+  spacing: null  # Use native
+  intensity_norm: "zscore"
+
+model:
+  architecture: "unet2d"
+  in_channels: 1
+  num_classes: 2
+  features: [32, 64, 128, 256, 512]
+
+training:
+  method: "standard"
+  epochs: 150
+  batch_size: 16
+
+logging:
+  save_dir: "./checkpoints/qubiq_baseline"
+  log_dir: "./logs/qubiq_baseline"

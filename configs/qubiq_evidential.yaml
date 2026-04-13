@@ -1,0 +1,42 @@
+# QUBIQ Evidential Configuration
+
+_base_: "base.yaml"
+
+data:
+  dataset: "qubiq"
+  root: "./data/qubiq"
+  task: "prostate"
+
+preprocessing:
+  spatial_size: [256, 256]
+  spacing: null
+  intensity_norm: "zscore"
+
+model:
+  architecture: "unet2d"
+  in_channels: 1
+  num_classes: 2
+  features: [32, 64, 128, 256, 512]
+  evidential:
+    enabled: true
+    activation: "softplus"
+    kl_reg_weight: 0.05
+    annealing_epochs: 15
+
+  multi_annotator:
+    enabled: true
+    num_annotators: 6  # QUBIQ prostate has 6 annotators
+    loss: "kl"
+
+training:
+  method: "evidential"
+  epochs: 200
+  batch_size: 16
+  loss:
+    name: "evidential"
+    evidential_weight: 1.0
+    kl_weight: 0.05
+
+logging:
+  save_dir: "./checkpoints/qubiq_evidential"
+  log_dir: "./logs/qubiq_evidential"

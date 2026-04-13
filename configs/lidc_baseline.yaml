@@ -1,0 +1,34 @@
+# LIDC-IDRI Baseline Configuration
+# Standard UNet with Dice+CE, evaluates softmax entropy
+
+_base_: "base.yaml"
+
+data:
+  dataset: "lidc"
+  root: "./data/lidc"
+
+preprocessing:
+  spatial_size: [128, 128]
+  spacing: [0.7, 0.7]  # LIDC typical in-plane resolution
+  intensity_norm: "ct_window"
+  ct_window: [-1000, 400]
+
+model:
+  architecture: "unet2d"
+  in_channels: 1
+  num_classes: 2
+  features: [32, 64, 128, 256, 512]
+  norm: "instance"
+
+training:
+  method: "standard"
+  epochs: 200
+  batch_size: 32
+  loss:
+    name: "dice_ce"
+    dice_weight: 1.0
+    ce_weight: 1.0
+
+logging:
+  save_dir: "./checkpoints/lidc_baseline"
+  log_dir: "./logs/lidc_baseline"

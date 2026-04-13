@@ -1,0 +1,43 @@
+# LIDC-IDRI Evidential Configuration
+# Dirichlet-based evidential segmentation for uncertainty decomposition
+
+_base_: "base.yaml"
+
+data:
+  dataset: "lidc"
+  root: "./data/lidc"
+
+preprocessing:
+  spatial_size: [128, 128]
+  spacing: [0.7, 0.7]
+  intensity_norm: "ct_window"
+  ct_window: [-1000, 400]
+
+model:
+  architecture: "unet2d"
+  in_channels: 1
+  num_classes: 2
+  features: [32, 64, 128, 256, 512]
+  norm: "instance"
+  evidential:
+    enabled: true
+    activation: "softplus"
+    kl_reg_weight: 0.05
+    annealing_epochs: 20
+
+training:
+  method: "evidential"
+  epochs: 250
+  batch_size: 32
+  optimizer:
+    lr: 5e-4
+  loss:
+    name: "evidential"
+    dice_weight: 0.5
+    ce_weight: 0.0
+    evidential_weight: 1.0
+    kl_weight: 0.05
+
+logging:
+  save_dir: "./checkpoints/lidc_evidential"
+  log_dir: "./logs/lidc_evidential"

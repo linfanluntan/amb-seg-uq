@@ -1,0 +1,109 @@
+# Base configuration for all experiments
+# Override in task-specific configs
+
+seed: 42
+deterministic: true
+
+data:
+  dataset: "lidc"  # lidc | qubiq
+  root: "./data/lidc"
+  num_workers: 8
+  pin_memory: true
+  # Splits
+  train_ratio: 0.7
+  val_ratio: 0.15
+  test_ratio: 0.15
+
+preprocessing:
+  spatial_size: [128, 128]  # 2D patch size
+  spacing: [1.0, 1.0]  # Target pixel spacing in mm
+  intensity_norm: "zscore"  # zscore | minmax | ct_window
+  ct_window: [-1000, 400]
+  augmentation:
+    random_flip: true
+    random_rotate: 15  # degrees
+    random_scale: [0.9, 1.1]
+    elastic_deform: false
+    gaussian_noise_std: 0.01
+
+model:
+  architecture: "unet2d"  # unet2d | unet3d | nnunet
+  in_channels: 1
+  num_classes: 2  # background + foreground
+  features: [32, 64, 128, 256, 512]
+  dropout_rate: 0.0  # Set > 0 for MC Dropout
+  norm: "instance"  # batch | instance | group
+  activation: "leakyrelu"
+
+  # Evidential settings (only used when method=evidential)
+  evidential:
+    enabled: false
+    activation: "softplus"  # softplus | relu | exp
+    kl_reg_weight: 0.01
+    annealing_epochs: 10  # Linearly anneal KL weight
+
+  # Multi-annotator settings
+  multi_annotator:
+    enabled: false
+    num_annotators: 4
+    loss: "kl"  # kl | js | ce_avg
+
+training:
+  method: "standard"  # standard | evidential | multi_annotator
+  epochs: 200
+  batch_size: 16
+  optimizer:
+    name: "adamw"
+    lr: 1e-3
+    weight_decay: 1e-4
+  scheduler:
+    name: "cosine"
+    T_max: 200
+    eta_min: 1e-6
+  loss:
+    name: "dice_ce"  # dice_ce | evidential | distributional
+    dice_weight: 1.0
+    ce_weight: 1.0
+  early_stopping:
+    patience: 30
+    metric: "val_dice"
+    mode: "max"
+  gradient_clip: 1.0
+  mixed_precision: true
+
+uncertainty:
+  # MC Dropout
+  mc_dropout:
+    enabled: false
+    num_samples: 20
+    dropout_rate: 0.1
+
+  # Deep Ensemble
+  ensemble:
+    enabled: false
+    num_models: 5
+
+  # Metrics to compute
+  metrics:
+    entropy: true
+    variance: true
+    mutual_information: true
+    evidential_decomposition: true
+    calibration:
+      ece_bins: 15
+      brier: true
+      reliability_diagram: true
+    error_detection:
+      auroc: true
+      auprc: true
+    correlation:
+      entropy_vs_iov: true  # Entropy vs inter-observer variability
+
+logging:
+  backend: "tensorboard"  # tensorboard | wandb
+  log_dir: "./logs"
+  save_dir: "./checkpoints"
+  log_every: 50  # iterations
+  val_every: 1   # epochs
+  save_best: true
+  visualize_every: 10  # epochs (uncertainty maps)

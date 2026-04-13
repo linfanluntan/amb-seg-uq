@@ -1,0 +1,58 @@
+# 3D LIDC-IDRI MC Dropout Configuration
+# ResEncUNet3D trained with dropout, evaluated with T stochastic passes
+
+seed: 42
+
+data:
+  dataset: "lidc3d"
+  root: "./data/lidc3d"
+  num_workers: 4
+
+preprocessing:
+  patch_size: [64, 128, 128]
+  target_spacing: [1.0, 1.0, 1.0]
+  ct_window: [-1000, 400]
+
+model:
+  in_channels: 1
+  num_classes: 2
+  base_features: 32
+  max_features: 320
+  n_stages: 5
+  blocks_per_stage: 2
+  deep_supervision: true
+  dropout: 0.1          # Active during training and MC inference
+  evidential:
+    enabled: false
+
+training:
+  method: "standard"
+  epochs: 250
+  batch_size: 2
+  optimizer:
+    name: "sgd"
+    lr: 0.01
+  loss:
+    name: "dice_ce"
+    dice_weight: 1.0
+    ce_weight: 1.0
+  gradient_clip: 12.0
+  mixed_precision: true
+  early_stopping:
+    patience: 50
+
+uncertainty:
+  mc_dropout:
+    enabled: true
+    num_samples: 20
+    dropout_rate: 0.1
+
+inference:
+  step_size: 0.5
+  batch_size: 2
+  tta: false   # TTA disabled when using MC dropout (already have stochasticity)
+
+logging:
+  save_dir: "./checkpoints/lidc3d_mcdropout"
+  log_dir: "./logs/lidc3d_mcdropout"
+  val_every: 10

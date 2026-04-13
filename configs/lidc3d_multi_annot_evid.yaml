@@ -1,0 +1,58 @@
+# 3D LIDC-IDRI Multi-Annotator Evidential Configuration
+# Combines distributional training with Dirichlet output
+
+seed: 42
+
+data:
+  dataset: "lidc3d"
+  root: "./data/lidc3d"
+  num_workers: 4
+
+preprocessing:
+  patch_size: [64, 128, 128]
+  target_spacing: [1.0, 1.0, 1.0]
+  ct_window: [-1000, 400]
+
+model:
+  in_channels: 1
+  num_classes: 2
+  base_features: 32
+  max_features: 320
+  n_stages: 5
+  blocks_per_stage: 2
+  deep_supervision: true
+  dropout: 0.0
+  evidential:
+    enabled: true
+    activation: "softplus"
+    annealing_epochs: 30
+  multi_annotator:
+    enabled: true
+    num_annotators: 4
+    loss: "kl"
+
+training:
+  method: "evidential"   # Use evidential output head
+  epochs: 300
+  batch_size: 2
+  optimizer:
+    name: "sgd"
+    lr: 0.01
+  loss:
+    name: "evidential"
+    dice_weight: 0.5
+    kl_weight: 0.05
+  gradient_clip: 12.0
+  mixed_precision: true
+  early_stopping:
+    patience: 60
+
+inference:
+  step_size: 0.5
+  batch_size: 2
+  tta: true
+
+logging:
+  save_dir: "./checkpoints/lidc3d_multi_annot_evid"
+  log_dir: "./logs/lidc3d_multi_annot_evid"
+  val_every: 10
